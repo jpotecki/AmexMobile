@@ -1,7 +1,6 @@
 module View exposing (..)
 
 import Table
-
 import Model        exposing (..)
 import Types        exposing (..)
 import Html         exposing (..)
@@ -34,6 +33,7 @@ config =
       ]
     }
 
+
+
 printErr : List String -> List (Html Msg)
 printErr err = List.map text err
-          

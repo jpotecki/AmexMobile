@@ -7,6 +7,7 @@ import Http
 import Geocoding exposing (..)
 
 
+
 type Msg
   = SetQuery String
   | Send
@@ -15,6 +16,7 @@ type Msg
   | MyReverseGeocoderResult (Result Http.Error Response)
   | NewMessage String
   | SetTableState Table.State
+
 
 
 type alias Model =

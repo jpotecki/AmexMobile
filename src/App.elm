@@ -3,7 +3,6 @@ module App exposing (..)
 import Model exposing (..)
 import View exposing (..)
 import Types exposing (..)
-
 import Html exposing (..)
 import WebSocket
 import Json.Decode exposing (..)
@@ -67,9 +66,11 @@ update msg model =
       { model | errors = (toString err) :: model.errors } ! []
 
 
+
 subscriptions : Model -> Sub Msg
 subscriptions model =
   WebSocket.listen wsAddress NewMessage
+
 
 
 geoResultTypes : List Geocoding.ComponentType
@@ -78,6 +79,7 @@ geoResultTypes =
   , Geocoding.PostalCode
   -- , Geocoding.Country
   ]
+
 
 
 geoOpt : Geolocation.Options

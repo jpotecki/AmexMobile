@@ -31,7 +31,7 @@ update msg model =
        { model | query = str } ! []
 
     Send ->
-      model ! [WebSocket.send wsAddress model.query]
+      model ! [ WebSocket.send wsAddress model.query ]
 
     NewMessage str -> 
       case decodeString decodeStore str of

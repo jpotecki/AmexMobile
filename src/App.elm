@@ -44,6 +44,7 @@ update msg model =
     
     UsePosition ->
       model ! [ Geolocation.nowWith geoOpt |> Task.attempt GotLocation ] 
+
     GotLocation (Ok loc) ->
       let
         cmd = reverseRequestForLatLng key (loc.latitude, loc.longitude)
@@ -51,7 +52,8 @@ update msg model =
                 |> Geocoding.withResultTypes geoResultTypes
                 |> Geocoding.sendReverseRequest MyReverseGeocoderResult
       in
-        model ! [cmd]
+        model ! [ cmd ]
+
     GotLocation (Err err) ->
       { model | errors = (toString err) :: model.errors } ! []
 

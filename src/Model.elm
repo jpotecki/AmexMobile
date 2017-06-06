@@ -22,7 +22,7 @@ type Msg
 type alias Model =
   { tableState  : Table.State
   , stores      : List Store
-  , query       : String
+  , query       : Maybe Req
   , errors      : List String
   }
 
@@ -32,7 +32,7 @@ init : List Store -> ( Model, Cmd Msg )
 init stores =
   let model = { tableState  = Table.initialSort "Distance"
               , stores      = []
-              , query       = ""
+              , query       = Nothing
               , errors      = []
               }
   in  model ! []

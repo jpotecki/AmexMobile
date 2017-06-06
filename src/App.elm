@@ -6,6 +6,7 @@ import Types exposing (..)
 import Html exposing (..)
 import WebSocket
 import Json.Decode exposing (..)
+import Json.Encode exposing (..)
 import Geocoding exposing (..)
 import Geolocation
 import Task exposing (..)
@@ -28,10 +29,14 @@ update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
     SetQuery str ->
-       { model | query = str } ! []
+       { model | query = Nothing } ! []
 
     Send ->
-      model ! [ WebSocket.send wsAddress model.query ]
+      case model.query of
+        Nothing -> model ! []
+        Just x ->
+          let req = reqToJSON x
+           in model ! [ WebSocket.send wsAddress (encode 0 req) ]
 
     NewMessage str -> 
       case decodeString decodeStore str of
@@ -58,16 +63,17 @@ update msg model =
       { model | errors = (toString err) :: model.errors } ! []
 
     MyReverseGeocoderResult (Ok res) ->
-      case List.head res.results of
-        Nothing   -> { model | errors = "No Result" :: model.errors } ! []
-        Just xs   ->
-          let str = toString xs.formattedAddress
-           in { model | errors = str :: model.errors } ! []
+      case getValid res of
+        Nothing   -> { model | errors = "No Results" :: model.errors } ! []
+        Just x    -> { model | query = Just x } ! [ send Send ]
 
     MyReverseGeocoderResult (Err err) ->
       { model | errors = (toString err) :: model.errors } ! []
 
-
+send : msg -> Cmd msg
+send msg =
+  Task.succeed msg
+  |> Task.perform identity
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
@@ -78,8 +84,8 @@ subscriptions model =
 geoResultTypes : List Geocoding.ComponentType
 geoResultTypes = 
   [ Geocoding.StreetAddress
-  , Geocoding.PostalCode
-  -- , Geocoding.Country
+  -- , Geocoding.PostalCode
+  -- , Geocoding.Locality
   ]
 
 

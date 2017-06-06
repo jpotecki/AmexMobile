@@ -10,14 +10,18 @@ import Html.Events  exposing (..)
 
 view : Model -> Html Msg
 view { tableState, stores, query, errors } =
-  div []
-    [ h1 []  [ text "Amex Stores" ]
-    , button [ onClick UsePosition] [ text "Geolocation" ]
-    , input  [ onInput SetQuery ] []
-    , button [ onClick Send] [ text "Send" ]
-    , Table.view config tableState stores
-    , div [] (printErr errors)
-    ] 
+  case stores of
+    [] -> div [] [ button [ onClick UsePosition] [ text "Find near stores"] 
+                 , div [] (printErr errors)
+                 ]
+    _  -> div []
+            [ h1 []  [ text "Amex Stores" ]
+            , button [ onClick UsePosition] [ text "Geolocation" ]
+            , input  [ onInput SetQuery ] []
+            , button [ onClick Send] [ text "Send" ]
+            , Table.view config tableState stores
+            , div [] (printErr errors)
+            ] 
 
 
 

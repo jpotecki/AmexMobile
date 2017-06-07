@@ -13,7 +13,6 @@ import Task exposing (..)
 import APIKey exposing (key, wsAddress)
 
 
-
 main : Program Never Model Msg
 main =
   Html.program
@@ -22,7 +21,6 @@ main =
     , update = update
     , subscriptions = subscriptions
     }
-
 
 
 update : Msg -> Model -> (Model, Cmd Msg)
@@ -41,12 +39,10 @@ update msg model =
     NewMessage str -> 
       case decodeString decodeStore str of
         Ok s    -> 
-          { model | stores = s :: model.stores } ! []
+          { model | stores = s :: model.stores |> List.sortBy .dist} 
+          ! [ ]
         Err err -> model ! []
 
-    SetTableState state ->
-      { model | tableState = state } ! []
-    
     UsePosition ->
       model ! [ Geolocation.nowWith geoOpt |> Task.attempt GotLocation ] 
 
@@ -96,5 +92,3 @@ geoOpt =
   , timeout = Just 5000
   , maximumAge = Nothing
   }
-
--- {"zip":12627,"city":"Berlin","page":0,"url":"http://akzeptanz.amex-services.de/suche.php","distance":14,"firma_pattern":"BeginWi","business":"All","name":"Mc"}

@@ -1,6 +1,6 @@
 module View exposing (..)
 
-import Table
+
 import Model        exposing (..)
 import Types        exposing (..)
 import Html         exposing (..)
@@ -9,35 +9,46 @@ import Html.Events  exposing (..)
 
 
 view : Model -> Html Msg
-view { tableState, stores, query, errors } =
+view { stores, query, errors } =
   case stores of
     [] -> div [] [ button [ onClick UsePosition] [ text "Find near stores"] 
-                 , div [] (printErr errors)
+                 , div [] (printErr errors) 
                  ]
     _  -> div []
             [ h1 []  [ text "Amex Stores" ]
             , button [ onClick UsePosition] [ text "Geolocation" ]
             , input  [ onInput SetQuery ] []
             , button [ onClick Send] [ text "Send" ]
-            , Table.view config tableState stores
+            -- , Table.view config tableState stores
+            , listStores stores
             , div [] (printErr errors)
             ] 
 
+listStores : List Store -> Html Msg
+listStores s = 
+  let 
+    entries = List.map createEntry s
+   in div [] entries
 
 
-config : Table.Config Store Msg
-config = 
-  Table.config
-    { toId = .name
-    , toMsg = SetTableState
-    , columns =
-      [ Table.intColumn "km" .dist
-      , Table.stringColumn "Name" .name
-      , Table.stringColumn "address" .address
-      ]
-    }
+createEntry : Store -> Html Msg
+createEntry store =
+  showStore store |> List.singleton |> div []
+
+
+
+showStore : Store -> Html Msg
+showStore store = 
+  div [] [ span [] [ text <| toString store.dist ] 
+         , span [] [ text store.name ]
+         ]
 
 
 
 printErr : List String -> List (Html Msg)
 printErr err = List.map text err
+
+
+
+
+

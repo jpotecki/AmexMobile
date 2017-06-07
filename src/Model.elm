@@ -1,6 +1,5 @@
 module Model exposing (..)
 
-import Table
 import Types exposing (..)
 import Geolocation exposing (..)
 import Http
@@ -15,13 +14,11 @@ type Msg
   | GotLocation (Result Error Location)
   | MyReverseGeocoderResult (Result Http.Error Response)
   | NewMessage String
-  | SetTableState Table.State
 
 
 
 type alias Model =
-  { tableState  : Table.State
-  , stores      : List Store
+  { stores      : List Store
   , query       : Maybe Req
   , errors      : List String
   }
@@ -30,8 +27,7 @@ type alias Model =
 
 init : List Store -> ( Model, Cmd Msg )
 init stores =
-  let model = { tableState  = Table.initialSort "Distance"
-              , stores      = []
+  let model = { stores      = []
               , query       = Nothing
               , errors      = []
               }

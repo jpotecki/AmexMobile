@@ -11,12 +11,16 @@ import Geocoding exposing (..)
 import Geolocation
 import Task exposing (..)
 import APIKey exposing (key, wsAddress)
+import Material
+
+
+
 
 
 main : Program Never Model Msg
 main =
   Html.program
-    { init = init []
+    { init = init
     , view = view
     , update = update
     , subscriptions = subscriptions
@@ -39,8 +43,7 @@ update msg model =
     NewMessage str -> 
       case decodeString decodeStore str of
         Ok s    -> 
-          { model | stores = s :: model.stores |> List.sortBy .dist} 
-          ! [ ]
+          { model | stores = insert s model.stores} ! []
         Err err -> model ! []
 
     UsePosition ->
@@ -65,6 +68,16 @@ update msg model =
 
     MyReverseGeocoderResult (Err err) ->
       { model | errors = (toString err) :: model.errors } ! []
+
+    Mdl (mdl) ->
+      Material.update Mdl mdl model
+
+
+
+
+
+
+
 
 send : msg -> Cmd msg
 send msg =

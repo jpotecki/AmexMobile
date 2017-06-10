@@ -8,6 +8,11 @@ import Maybe
 import Maybe.Extra  exposing (..)
 import Result
 import String
+import Material
+import Dict
+import Dict         exposing (Dict)
+
+
 
 type alias Store =
   { name : String
@@ -73,14 +78,7 @@ tryTransform res =
       |> andMap (Just "")         -- name
 
 
-toInt_ : Maybe String -> Maybe Int
-toInt_ str = mapM String.toInt str |> Maybe.andThen Result.toMaybe
-
-mapM : (a -> b) -> Maybe a -> Maybe b
-mapM = Maybe.map
-
-
-type alias Req = 
+type alias Req =
   { zip           : Int
   , city          : String
   , country       : String
@@ -89,6 +87,15 @@ type alias Req =
   , business      : Business
   , name          : String
   }
+
+
+toInt_ : Maybe String -> Maybe Int
+toInt_ str = mapM String.toInt str |> Maybe.andThen Result.toMaybe
+
+mapM : (a -> b) -> Maybe a -> Maybe b
+mapM = Maybe.map
+
+
 
 reqToJSON : Req -> Value
 reqToJSON req =
@@ -132,3 +139,25 @@ busToJSON x =
     Travel  -> Json.Encode.string "Travel"
     Gas     -> Json.Encode.string "Gas"
     Other   -> Json.Encode.string "Other"
+
+
+
+type alias Mdl =
+  Material.Model
+
+
+type alias Distance = Int
+
+
+
+type alias Stores = Dict Distance (List Store)
+
+insert : Store -> Dict Distance (List Store) -> Dict Distance (List Store)
+insert new dict =
+  case Dict.member new.dist dict of
+    True -> Dict.update new.dist (\xs -> addStore xs new) dict
+    _    -> Dict.insert new.dist [ new ] dict
+
+addStore : Maybe (List Store) -> Store -> Maybe (List Store)
+addStore list store = 
+  Maybe.map (\xs -> store :: xs) list |> Maybe.map (sortBy .name)

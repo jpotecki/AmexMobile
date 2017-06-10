@@ -5,13 +5,16 @@ import Model        exposing (..)
 import Types        exposing (..)
 import Html         exposing (..)
 import Html.Events  exposing (..)
+import Dict
+import Dict         exposing (Dict)
+
 
 
 
 view : Model -> Html Msg
 view { stores, query, errors } =
-  case stores of
-    [] -> div [] [ button [ onClick UsePosition] [ text "Find near stores"] 
+  case Dict.isEmpty stores of
+    True -> div [] [ button [ onClick UsePosition] [ text "Find near stores"] 
                  , div [] (printErr errors) 
                  ]
     _  -> div []
@@ -20,15 +23,18 @@ view { stores, query, errors } =
             , input  [ onInput SetQuery ] []
             , button [ onClick Send] [ text "Send" ]
             -- , Table.view config tableState stores
-            , listStores stores
+            , toList stores |> listStores 
             , div [] (printErr errors)
             ] 
 
 listStores : List Store -> Html Msg
-listStores s = 
-  let 
-    entries = List.map createEntry s
-   in div [] entries
+listStores s = div [] <| List.map createEntry s
+
+
+toList : Dict Distance (List Store) -> List Store
+toList stores =
+  Dict.toList stores |> List.map (\(_,x) -> x ) |> List.concat
+
 
 
 createEntry : Store -> Html Msg

@@ -16,11 +16,10 @@ import Material
 
 
 
-
 main : Program Never Model Msg
 main =
   Html.program
-    { init = init
+    { init = quickPoll
     , view = view
     , update = update
     , subscriptions = subscriptions
@@ -38,16 +37,22 @@ update msg model =
         Nothing -> model ! []
         Just x ->
           let req = reqToJSON x
-           in model ! [ WebSocket.send wsAddress (encode 0 req) ]
+           in { model | querying = True} 
+           ! [ WebSocket.send wsAddress (encode 0 req) ]
 
     NewMessage str -> 
+      if str == "OK" 
+        then { model | querying = False} ! []
+        else 
       case decodeString decodeStore str of
         Ok s    -> 
           { model | stores = insert s model.stores} ! []
-        Err err -> model ! []
+        
+        Err err -> { model | errors = err :: model.errors } ! []
 
     UsePosition ->
-      model ! [ Geolocation.nowWith geoOpt |> Task.attempt GotLocation ] 
+      { model | querying = True }
+      ! [ Geolocation.nowWith geoOpt |> Task.attempt GotLocation ] 
 
     GotLocation (Ok loc) ->
       let
@@ -56,7 +61,7 @@ update msg model =
                 |> Geocoding.withResultTypes geoResultTypes
                 |> Geocoding.sendReverseRequest MyReverseGeocoderResult
       in
-        model ! [ cmd ]
+        { model | pos = Just (loc.latitude, loc.longitude )} ! [ cmd ]
 
     GotLocation (Err err) ->
       { model | errors = (toString err) :: model.errors } ! []
@@ -64,29 +69,24 @@ update msg model =
     MyReverseGeocoderResult (Ok res) ->
       case getValid res of
         Nothing   -> { model | errors = "No Results" :: model.errors } ! []
-        Just x    -> { model | query = Just x } ! [ send Send ]
+        Just x    -> { model | query = Just x } ! [ Model.send Send ]
 
     MyReverseGeocoderResult (Err err) ->
       { model | errors = (toString err) :: model.errors } ! []
 
     Mdl (mdl) ->
       Material.update Mdl mdl model
+    
+    SelectTab no -> { model | tab = no } ! []
+
+    SetLatLong latitude longitude ->
+            { model | pos = Just (latitude, longitude) } ! []
 
 
-
-
-
-
-
-
-send : msg -> Cmd msg
-send msg =
-  Task.succeed msg
-  |> Task.perform identity
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-  WebSocket.listen wsAddress NewMessage
+   WebSocket.listen wsAddress NewMessage
 
 
 

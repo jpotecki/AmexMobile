@@ -11,8 +11,7 @@ import String
 import Material
 import Dict
 import Dict         exposing (Dict)
-
-
+import Html         exposing (Html, Attribute)
 
 type alias Store =
   { name : String
@@ -74,7 +73,7 @@ tryTransform res =
       |> andMap country
       |> andMap (Just 5)          -- distance
       |> andMap (Just Contain)
-      |> andMap (Just All)
+      |> andMap (Just Food)
       |> andMap (Just "")         -- name
 
 
@@ -161,3 +160,15 @@ insert new dict =
 addStore : Maybe (List Store) -> Store -> Maybe (List Store)
 addStore list store = 
   Maybe.map (\xs -> store :: xs) list |> Maybe.map (sortBy .name)
+
+-- currently not possible, as Store doesn't save contain business area
+-- filterStores : List Business -> Stores -> Stores
+-- filterStores bs xs =
+--   flip Dict.map xs
+--     <| \_ x -> flip List.filter x
+--     <| \y -> List.foldl ( || ) False
+--     <| \z -> List.map (\b -> List.member b z.business) bs
+
+googleMap : List (Attribute a) -> List (Html a) -> Html a
+googleMap =
+    Html.node "map-wrapper"

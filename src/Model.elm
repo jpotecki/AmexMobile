@@ -3,18 +3,25 @@ module Model exposing (..)
 import Types exposing (..)
 import Geolocation exposing (..)
 import Http
-import Geocoding exposing (..)
+import Geocoding as Geo
 import Material
 import Dict
+import Task exposing (..)
+import Json.Decode as Decode exposing (..)
+import Html.Events exposing (..)
+
+import Html exposing (..)
 
 type Msg
   = SetQuery String
   | Send
   | UsePosition
   | GotLocation (Result Error Location)
-  | MyReverseGeocoderResult (Result Http.Error Response)
+  | MyReverseGeocoderResult (Result Http.Error Geo.Response)
   | NewMessage String
   | Mdl (Material.Msg Msg)
+  | SelectTab Int
+  | SetLatLong Float Float
 
 
 
@@ -23,6 +30,9 @@ type alias Model =
   , query       : Maybe Req
   , errors      : List String
   , mdl         : Material.Model
+  , tab         : Int
+  , querying    : Bool
+  , pos       : Maybe (Float, Float)
   }
 
 
@@ -33,5 +43,54 @@ init =
               , query       = Nothing
               , errors      = []
               , mdl         = Material.model
+              , tab         = 0
+              , querying    = False
+              , pos         = Nothing
               }
   in  model ! []
+
+
+quickPoll : ( Model, Cmd Msg )
+quickPoll = 
+  let model = { stores      = Dict.empty
+              , query       = Nothing
+              , errors      = []
+              , mdl         = Material.model
+              , tab         = 0
+              , querying    = True
+              , pos         = Nothing
+              }
+  in  model ! [ send UsePosition ]
+
+
+send : Msg -> Cmd Msg
+send msg =
+  Task.succeed msg
+  |> Task.perform identity
+
+
+recordLatLongOnDrag : Attribute Msg
+recordLatLongOnDrag =
+    on "map-moved" <|
+        Decode.map2 SetLatLong
+            (at [ "target", "latitude" ] float)
+            (at [ "target", "longitude" ] float)
+
+
+onChange : (Float -> Msg) -> Attribute Msg
+onChange toMsg =
+    Decode.string
+        |> Decode.andThen decodeLatLong
+        |> Decode.at [ "target", "value" ]
+        |> Decode.map toMsg
+        |> on "change"
+
+
+decodeLatLong : String -> Decoder Float
+decodeLatLong str =
+    case Decode.decodeString Decode.float str of
+        Ok num ->
+            Decode.succeed (num / 10000)
+
+        Err err ->
+            Decode.fail err

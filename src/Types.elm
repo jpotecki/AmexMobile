@@ -19,7 +19,7 @@ type alias Store =
   , zip : Int
   , city : String
   , address : String
-  , dist : Int}
+  , dist : Float}
 
 
 decodeStore : Decoder Store
@@ -30,7 +30,7 @@ decodeStore =
     (at ["zip"] int)
     (at ["city"] string)
     (at ["address"] string)
-    (at ["dist"] int)
+    (at ["dist"] float)
 
 
 
@@ -52,14 +52,14 @@ mapTillSucc xs f =
 
 
 
-getValid : Response -> Maybe Req
-getValid res = mapTillSucc res.results tryTransform
+getValid : Response -> Float -> Float -> Maybe Req
+getValid res lat lon = mapTillSucc res.results (tryTransform lat lon)
 
 
 
 
-tryTransform : GeocodingResult -> Maybe Req
-tryTransform res =
+tryTransform : Float -> Float -> GeocodingResult -> Maybe Req
+tryTransform lat lon res=
   let
       zip_code = extractFrom [ PostalCode ]           res.addressComponents
       city     = extractFrom [ Locality, Political ]  res.addressComponents
@@ -75,6 +75,8 @@ tryTransform res =
       |> andMap (Just Contain)
       |> andMap (Just Food)
       |> andMap (Just "")         -- name
+      |> andMap (Just lat)
+      |> andMap (Just lon)
 
 
 type alias Req =
@@ -85,6 +87,8 @@ type alias Req =
   , firma_pattern : FPattern
   , business      : Business
   , name          : String
+  , lat           : Float
+  , lon           : Float
   }
 
 
@@ -95,6 +99,18 @@ mapM : (a -> b) -> Maybe a -> Maybe b
 mapM = Maybe.map
 
 
+reqToJSONothing : Req -> Value
+reqToJSONothing req =
+  Json.Encode.object  
+    [ ( "zip", Json.Encode.int req.zip )
+    , ( "city", Json.Encode.string req.city )
+    , ( "country", Json.Encode.string req.country )
+    , ( "distance", Json.Encode.int req.distance )
+    , ( "firma_pattern", fpToJSON req.firma_pattern )
+    , ( "business", busToJSON req.business )
+    , ( "name", Json.Encode.string req.name )
+    ]
+
 
 reqToJSON : Req -> Value
 reqToJSON req =
@@ -102,11 +118,16 @@ reqToJSON req =
     [ ( "zip", Json.Encode.int req.zip )
     , ( "city", Json.Encode.string req.city )
     , ( "country", Json.Encode.string req.country )
-    , ( "distance", Json.Encode.int req.distance)
-    , ( "firma_pattern", fpToJSON req.firma_pattern)
-    , ( "business", busToJSON req.business)
-    , ( "name", Json.Encode.string req.name)
+    , ( "distance", Json.Encode.int req.distance )
+    , ( "firma_pattern", fpToJSON req.firma_pattern )
+    , ( "business", busToJSON req.business )
+    , ( "name", Json.Encode.string req.name )
+    , ( "lat", Json.Encode.float req.lat)
+    , ( "lon", Json.Encode.float req.lon)
     ]
+
+
+
 
 type FPattern = Contain 
               | BeginWith
@@ -145,7 +166,7 @@ type alias Mdl =
   Material.Model
 
 
-type alias Distance = Int
+type alias Distance = Float
 
 
 

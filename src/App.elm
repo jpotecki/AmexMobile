@@ -29,9 +29,6 @@ main =
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
-    SetQuery str ->
-       { model | query = Nothing } ! []
-
     Send ->
       case model.query of
         Nothing -> model ! []
@@ -41,9 +38,6 @@ update msg model =
            ! [ WebSocket.send wsAddress (encode 0 req) ]
 
     NewMessage str -> 
-      if str == "OK" 
-        then { model | querying = False} ! []
-        else 
       case decodeString decodeStore str of
         Ok s    -> 
           { model | stores = insert s model.stores} ! []
@@ -59,29 +53,33 @@ update msg model =
         cmd = reverseRequestForLatLng key (loc.latitude, loc.longitude)
                 |> Geocoding.withLocationTypes [ Rooftop ]
                 |> Geocoding.withResultTypes geoResultTypes
-                |> Geocoding.sendReverseRequest MyReverseGeocoderResult
+                |> Geocoding.sendReverseRequest (MyReverseGeocoderResult loc.latitude loc.longitude)
       in
-        { model | pos = Just (loc.latitude, loc.longitude )} ! [ cmd ]
+        model ! [ cmd ]
 
     GotLocation (Err err) ->
       { model | errors = (toString err) :: model.errors } ! []
 
-    MyReverseGeocoderResult (Ok res) ->
-      case getValid res of
+    MyReverseGeocoderResult lat lon (Ok res) ->
+      case getValid res lat lon of
         Nothing   -> { model | errors = "No Results" :: model.errors } ! []
         Just x    -> { model | query = Just x } ! [ Model.send Send ]
 
-    MyReverseGeocoderResult (Err err) ->
+    MyReverseGeocoderResult _ _ (Err err) ->
       { model | errors = (toString err) :: model.errors } ! []
 
     Mdl (mdl) ->
       Material.update Mdl mdl model
-    
-    SelectTab no -> { model | tab = no } ! []
 
-    SetLatLong latitude longitude ->
-            { model | pos = Just (latitude, longitude) } ! []
 
+
+updateQuery : Model -> Float -> Float -> Model
+updateQuery model nlat nlon = 
+  case model.query of 
+    Nothing  -> model
+    Just req -> 
+      let new = { req | lat = nlat, lon = nlon} |> Just
+       in { model | query = new }
 
 
 subscriptions : Model -> Sub Msg
@@ -92,10 +90,7 @@ subscriptions model =
 
 geoResultTypes : List Geocoding.ComponentType
 geoResultTypes = 
-  [ Geocoding.StreetAddress
-  -- , Geocoding.PostalCode
-  -- , Geocoding.Locality
-  ]
+  [ Geocoding.StreetAddress ]
 
 
 

@@ -18,52 +18,23 @@ import Material.Progress as Loading
 import Material.List as List
 import Material.Typography as Typo
 import String
-import Tuple      exposing (first, second)
-import Debug
+
 
 view : Model -> Html Msg
 view model =
   Material.Scheme.top <| Layout.render Mdl
         model.mdl
-        [ Layout.selectedTab model.tab
-        , Layout.onSelectTab SelectTab ]
+        []
         { header = [ text "Amex Mobile Search"]
         , drawer = []
-        , tabs = ( [ text "home", text "map"], [ ] )
-        , main = [ viewBody model ]
+        , tabs = ( [], [] )
+        , main = [ showHome model ]
         }
-
-
-viewBody : Model -> Html Msg
-viewBody model =
-    case model.tab of
-        0 ->
-            showHome model
-        1 -> googleMap (googleAttribute model) []
-        _ -> text "404"
-
-googleAttribute : Model -> List (Html.Attribute Msg)
-googleAttribute model =
-  case model.pos of
-    Just pos -> 
-      [ Attribute.attribute "latitude"  (toString <| first pos)
-      , Attribute.attribute "longitude" (toString <| second pos)
-      , Attribute.attribute "drag-events" "true"
-      , recordLatLongOnDrag
-      ]
-    Nothing -> Debug.log "Nothing" []
 
 
 
 showHome : Model -> Html Msg
 showHome model =
-      -- div [] [ showLoading model.querying
-      --        , Button.render Mdl [0] model.mdl
-      --           [ Button.fab
-      --           , Button.colored
-      --           , Options.onClick UsePosition
-      --           ] [ Icon.i "Get Data"]
-      --        ]
     div [] [ showLoading model.querying
            , drawStores model
            ]
@@ -81,25 +52,11 @@ drawStores model =
           [ List.content [] 
               [ Options.styled p [ Typo.capitalize ] [ storename store.name ] ]
           , List.content [] 
-              [ Options.styled p [ Typo.left ] [ showLink model store ] ]
+              [ Options.styled p []                  [ text <| toString store.dist ] ]
+          , List.content []
+              [ Options.styled p [ Typo.left ]       [ showLink model store ] ]
           ]
 
-  -- Table.table [] [ Table.thead []
-  --                    [ Table.tr []
-  --                      [ Table.th [ Table.numeric ] [ text "Distance" ]
-  --                      , Table.th [] [ text "Name" ]
-  --                      ]
-  --                    ]
-  --                , Table.tbody []
-  --                (flip List.map (toList model.stores) (\store ->
-  --                   Table.tr []
-  --                     [ Table.td [] [ text <| toString store.dist ]
-  --                     , Table.td [ Table.numeric ] [ text store.name ]
-  --                     , Table.td [ ] [ (showLink model store) ]
-  --                     ]
-  --                   )
-  --                )
-  --                ]
 
 
 showLink : Model -> Store -> Html Msg
@@ -123,20 +80,6 @@ showLoading = \x ->
   if x then Loading.indeterminate else span [] []
 
 
--- view { stores, query, errors } =
---   case Dict.isEmpty stores of
---     True -> div [] [ button [ onClick UsePosition] [ text "Find near stores"] 
---                  , div [] (printErr errors) 
---                  ]
---     _  -> div []
---             [ h1 []  [ text "Amex Stores" ]
---             , button [ onClick UsePosition] [ text "Geolocation" ]
---             , input  [ onInput SetQuery ] []
---             , button [ onClick Send] [ text "Send" ]
---             -- , Table.view config tableState stores
---             , toList stores |> listStores 
---             , div [] (printErr errors)
---             ] 
 
 listStores : List Store -> Html Msg
 listStores s = div [] <| List.map createEntry s
